@@ -1,0 +1,399 @@
+﻿<!-- Vue JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.4.4/vue.js"></script>
+<!-- Axios -->
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<!-- Buefy CSS -->
+<link rel="stylesheet" href="https://unpkg.com/buefy/lib/buefy.min.css">
+<!-- JQuery -->
+<script src="~/Scripts/jquery-1.10.2.js"></script>
+<!-- Buefy JavaScript -->
+<script src="https://unpkg.com/buefy"></script>
+<!-- Spinkit -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/spinkit/1.2.5/spinkit.min.css" />
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+<script type="text/javascript" src="http://cdn.jsdelivr.net/vue.table/1.5.3/vue-table.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+
+<div id="app" v-cloak>
+    <nav class="navbar" style="background-color:#714dd2; margin-bottom:20px">
+        <div class="navbar-brand">
+            <a href="@Url.Action("Index","Home")">
+                <h3 class="title navbar-item" style="color:white"><i class="fa fa-address-book-o"></i>&nbsp;Registro de clientes</h3></a>
+            
+        </div>
+        <div class="navbar-end">
+          
+        </div>
+    </nav>
+    <div class="container body-content">
+        <div class="modal" id="modal">
+            <div class="modal-background"></div>
+            <div class="modal-card" style="width:460px">
+                <header class="modal-card-head">
+                    <p class="modal-card-title">Registrar Cliente</p>
+                    <button class="delete" v-on:click="cerrar" aria-label="close"></button>
+                </header>
+                <section class="modal-card-body">
+                   <form>
+                        <b-input id="nombre" placeholder="Nombre" style="margin-bottom:10px"></b-input>
+                        <b-input id="apellido" placeholder="Apellido" style="margin-bottom:10px"></b-input>
+                        <b-input type="email" id="correo" placeholder="Correo" style="margin-bottom:10px"></b-input>
+                        <b-input id="telefono" placeholder="Telefono"></b-input>
+                        <input id="idd" hidden />
+                        <input id="status" value="guardar" hidden />
+                    </form>
+                </section>
+                <footer class="modal-card-foot">
+                    <button v-on:click="verificar()" class="button is-success"><i class="fa fa-check"></i>&nbsp;Guardar</button>
+                    <button v-on:click="cerrar" class="button"><i class="fa fa-close"></i>&nbsp;Cancelar</button>
+                </footer>
+            </div>
+        </div>
+
+
+        <template>
+            <b-tabs type="is-boxed">
+                <b-tab-item label="Listado" icon="group">
+                    <nav class="navbar" style="margin-top:10px">
+
+                        <h3 class="title navbar-item">Clientes Registrados</h3>
+
+                        <button style="margin-left:auto" v-on:click="abrir()" id="btn" class="button is-small is-info navbar-item">
+                            <i class="fa fa-plus"></i>&nbsp;Nuevo Cliente
+                        </button>
+                    </nav>
+                   
+                    <div class="sk-three-bounce" v-if="personas.length==0">
+                        <div class="sk-child sk-bounce1"></div>
+                        <div class="sk-child sk-bounce2"></div>
+                        <div class="sk-child sk-bounce3"></div>
+                    </div>
+
+                    <b-table :data="personas"
+                             paginated
+                             :per-page="5"
+                             default-sort="IdPersona">
+
+                        <template scope="props">
+                            <b-table-column field="IdPersona" label="ID" width="40" sortable numeric>
+                                {{ props.row.IdPersona }}
+                            </b-table-column>
+
+                            <b-table-column field="Nombre" label="Nombre" sortable>
+                                {{ props.row.Nombre }}
+                            </b-table-column>
+
+                            <b-table-column field="Apellido" label="Apellido" sortable>
+                                {{ props.row.Apellido }}
+                            </b-table-column>
+
+                            <b-table-column field="Telefono" label="Telefono">
+                                {{ props.row.Telefono }}
+                            </b-table-column>
+
+                            <b-table-column field="Correo" label="Correo">
+                                {{ props.row.Correo }}
+                            </b-table-column>
+
+                            <b-table-column field="Accion" label="Accion">
+                                <button style="margin:auto" class="button is-warning" v-on:click="editar(props.row)"><i class="fa fa-pencil"></i>&nbsp;Editar</button>
+                                <button class="button is-danger" v-on:click="confirmCustomDelete(props.row)"><i class="fa fa-trash"></i>&nbsp;Eliminar</button>
+
+                            </b-table-column>
+
+
+
+                        </template>
+                    </b-table>
+
+
+                </b-tab-item>
+                <b-tab-item label="Buscador" icon="search">
+                    <nav class="navbar" style="margin-top:10px">
+
+                        <h3 class="title navbar-item">Buscar Clientes</h3>
+                        <button style="margin-left:auto" v-on:click="abrirBuscar()" id="btn" class="button is-medium is-info navbar-item">
+                            <i class="fa fa-plus"></i>&nbsp;Nueva Busqueda
+                        </button>
+                    </nav>
+
+                    <div class="modal" id="modal2">
+                        <div class="modal-background"></div>
+                        <div class="modal-card" style="width:460px">
+                            <header class="modal-card-head">
+                                <p class="modal-card-title">Buscar Cliente</p>
+                                <button class="delete" v-on:click="cerrar" aria-label="close"></button>
+                            </header>
+                            <section class="modal-card-body">
+                                
+                                    <b-select placeholder="Buscar por..." id="filtro">
+                                        <option value="id">ID</option>
+                                        <option value="nombre">Nombre</option>
+                                        <option value="apellido">Apellido</option>
+
+                                    </b-select>
+
+                                    <b-input id="parametro" placeholder="Busqueda" style="margin-top:10px"></b-input>
+                                   
+                                
+                            </section>
+                            <footer class="modal-card-foot">
+                                <button v-on:click="buscar()" class="button is-success"><i class="fa fa-check"></i>&nbsp;Buscar</button>
+                                <button v-on:click="cerrar" class="button"><i class="fa fa-close"></i>&nbsp;Cancelar</button>
+                            </footer>
+                        </div>
+                    </div>
+
+                    <b-table :data="busqueda"
+                             paginated
+                             :per-page="5"
+                             default-sort="IdPersona">
+
+                        <template scope="props">
+                            <b-table-column field="IdPersona" label="ID" width="40" sortable numeric>
+                                {{ props.row.IdPersona }}
+                            </b-table-column>
+
+                            <b-table-column field="Nombre" label="Nombre" sortable>
+                                {{ props.row.Nombre }}
+                            </b-table-column>
+
+                            <b-table-column field="Apellido" label="Apellido" sortable>
+                                {{ props.row.Apellido }}
+                            </b-table-column>
+
+                            <b-table-column field="Telefono" label="Telefono">
+                                {{ props.row.Telefono }}
+                            </b-table-column>
+
+                            <b-table-column field="Correo" label="Correo">
+                                {{ props.row.Correo }}
+                            </b-table-column>
+
+                            <b-table-column field="Accion" label="Accion">
+                                <button style="margin:auto" class="button is-warning" v-on:click="editar(props.row)"><i class="fa fa-pencil"></i>&nbsp;Editar</button>
+                                <button class="button is-danger" v-on:click="confirmCustomDelete(props.row)"><i class="fa fa-trash"></i>&nbsp;Eliminar</button>
+
+                            </b-table-column>
+
+
+
+                        </template>
+                    </b-table>
+
+                </b-tab-item>
+               
+            </b-tabs>
+        </template>
+
+
+      
+    </div>
+
+
+    
+
+</div>
+
+
+<script>
+    
+    (function (vue, axios) {
+
+        Vue.use(Buefy.default);
+       
+                
+        var app = new Vue({
+            el: '#app',
+
+            data: {
+                personas: [],busqueda:[]
+                
+            },
+            mounted: function(){
+                var that = this;
+
+                axios.get('/api/personas')
+                    .then(function (response) {
+
+                        console.log(response);
+                        that.personas = response.data;
+
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    })
+
+
+
+            },
+            methods: {
+                abrirBuscar() {
+                    $("#modal2").addClass('is-active');
+                    document.getElementById("filtro").value = "";
+                    document.getElementById("parametro").value = "";
+                },
+                buscar() {
+                   var that = this;
+                    var persona = {
+                        
+                        nombre: $("#filtro").val(), apellido: $("#parametro").val(),
+                        status: "buscar"
+
+                    };   
+
+                    axios.post('/api/personas', persona)
+                        .then(function (response) {
+                            that.busqueda = response.data;
+                            console.log(response);
+                            $("#modal2").removeClass('is-active');
+                            
+                        })
+                        .catch(function (error) {
+                            console.log(error);
+                        });
+
+
+
+                },
+
+                abrir() {
+                    this.limpiar();
+                    $("#modal").addClass('is-active');
+                },
+                limpiar() {
+                    document.getElementById("idd").value = "";
+                    document.getElementById("nombre").value = "";
+                    document.getElementById("apellido").value = "";
+                    document.getElementById("telefono").value = "";
+                    document.getElementById("correo").value = "";
+                    document.getElementById("status").value = "guardar";       
+                },
+                cerrar(){
+                    $("#modal").removeClass('is-active');
+                    $("#modal2").removeClass('is-active');
+                },
+                editar(persona) {
+                    console.log(persona);
+
+                    document.getElementById("idd").value = persona.IdPersona;
+                    document.getElementById("nombre").value = persona.Nombre;
+                    document.getElementById("apellido").value = persona.Apellido;
+                    document.getElementById("telefono").value = persona.Telefono;
+                    document.getElementById("correo").value = persona.Correo;
+                    document.getElementById("status").value = "editar";                    
+
+                    $("#modal").addClass('is-active');
+                }
+                ,
+                Eliminar(persona) {
+                    console.log(persona.IdPersona);
+
+                    var that = this;
+                    that.persona = persona;
+                   
+                    
+                        var persona2 = {
+                            IdPersona: persona.IdPersona,
+                            nombre: persona.Nombre, apellido: persona.Apellido,
+                            correo: persona.Correo, telefono: persona.Telefono,
+                            status: "eliminar"
+                        };
+
+                        axios.post('/api/personas', persona2)
+                            .then(function (response) {
+                                that.mostrar();
+                                that.$toast.open('Cliente eliminado');
+                                that.buscar();
+                            })
+                            .catch(function (error) {
+                                console.log(error);
+                            });
+
+                    
+
+                },
+                verificar() {
+                    that = this;
+                    if ($("#nombre").val() <= 0 || $("#apellido").val() <= 0 || $("#correo").val() <= 0 || $("#telefono").val() <= 0) {
+                        that.$dialog.alert('Debe completar todos los campos')
+                    } else {
+                        
+                        var persona = {
+                            IdPersona: $("#idd").val(),
+                            nombre: $("#nombre").val(), apellido: $("#apellido").val(),
+                            correo: $("#correo").val(), telefono: $("#telefono").val(),
+                            status: $("#status").val()
+
+                        };                        
+
+                        axios.post('/api/personas', persona)
+                            .then(function (response) {
+                                that.mostrar();
+                                that.cerrar();
+                                //that.$dialog.alert('Registrado');
+                                if (persona.status == "guardar") {
+                                    that.$toast.open('Cliente registrado');
+                                } else if (persona.status == "editar") {
+                                    that.$toast.open('Cliente actualizado');
+                                    that.buscar();
+                                }
+                                
+
+
+                            })
+                            .catch(function (error) {
+                                console.log(error);
+                            });
+
+                    }
+                },
+                mostrar() {
+                    var that = this;
+                    
+                    console.log("Mostrando");
+                    axios.get('/api/personas')
+                        .then(function (response) {
+                            console.log(response);
+                            that.personas = response.data;
+
+                        })
+                        .catch(function (error) {
+                            console.log(error);
+                        })
+
+
+                },
+                confirmCustomDelete(persona) {
+                    that = this;
+                    this.$dialog.confirm({
+                        
+                        title: 'Eliminando cliente',
+                        message: 'Esta seguro que desea <b>eliminar</b> este cliente?',
+                        confirmText: 'Eliminar',
+                        type: 'is-danger',
+                        hasIcon: true,
+                        onConfirm: function () {
+                            () => this.$toast.open('Cliente eliminado');
+                            that.Eliminar(persona);
+                        }
+                    })
+                }
+            }
+        });
+
+        //export default {
+        //    data() {
+        //        return {
+        //            isImageModalActive: false,
+        //            isCardModalActive: false
+        //        }
+        //    }
+        //}
+
+        
+    })(window.vue, window.axios);
+</script>
+
